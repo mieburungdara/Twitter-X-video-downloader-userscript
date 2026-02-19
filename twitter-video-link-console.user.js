@@ -341,7 +341,13 @@
       if (data) {
         // Buat link ke tweet asli
         const tweetUrl = `https://x.com/i/status/${id}`;
-        tweetInfo = `📌 Tweet: ${id}\n📝 ${data.text}\n🔗 Link: ${tweetUrl}`;
+        // Bersihkan text dari karakter tidak valid untuk UTF-8
+        const cleanText = (data.text || '')
+          .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Hapus control characters
+          .replace(/\u200B/g, '') // Hapus zero-width space
+          .replace(/\uFEFF/g, '') // Hapus BOM
+          .slice(0, 200); // Batasi panjang text
+        tweetInfo = `📌 Tweet: ${id}\n📝 ${cleanText}\n🔗 ${tweetUrl}`;
         allLinks.push(tweetInfo);
         let mediaIndex = 0;
         data.mediaList.forEach((m) => {
