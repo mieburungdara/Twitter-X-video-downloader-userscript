@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Telegram API</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 { color: #0088cc; }
+        h2 { color: #333; margin-top: 0; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        textarea { min-height: 100px; font-family: monospace; }
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .btn-primary { background: #0088cc; color: white; }
+        .btn-secondary { background: #4CAF50; color: white; }
+        .btn-danger { background: #f44336; color: white; }
+        button:hover { opacity: 0.9; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .result.success { background: #e8f5e9; border: 1px solid #4CAF50; }
+        .result.error { background: #ffebee; border: 1px solid #f44336; }
+        .result.info { background: #e3f2fd; border: 1px solid #2196F3; }
+        .status { 
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        .status.loading { background: #fff3e0; border: 1px solid #ff9800; }
+        .status.success { background: #e8f5e9; border: 1px solid #4CAF50; }
+        .status.error { background: #ffebee; border: 1px solid #f44336; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Telegram API</h1>
+    
+    <div class="card">
+        <h2>📋 Konfigurasi</h2>
+        <label>Bot Token</label>
+        <input type="text" id="botToken" placeholder="123456789:ABCdef...">
+        
+        <label>Chat ID</label>
+        <input type="text" id="chatId" placeholder="123456789">
+    </div>
+
+    <div class="card">
+        <h2>🎬 Test sendVideo</h2>
+        <label>Video URL</label>
+        <input type="text" id="videoUrl" placeholder="https://video.twimg.com/...">
+        
+        <label>Caption (opsional)</label>
+        <textarea id="videoCaption">🧪 Test video dari Twitter</textarea>
+        
+        <button class="btn-primary" onclick="testSendVideo()">📤 Kirim Video</button>
+        <div id="videoResult"></div>
+    </div>
+
+    <div class="card">
+        <h2>📷 Test sendPhoto</h2>
+        <label>Photo URL</label>
+        <input type="text" id="photoUrl" value="https://pbs.twimg.com/amplify_video_thumb/2004618040743518209/img/MESKGetNIIOFVL_Z.jpg" placeholder="https://...">
+        
+        <label>Caption (opsional)</label>
+        <textarea id="photoCaption">🧪 Test photo dari Twitter</textarea>
+        
+        <button class="btn-secondary" onclick="testSendPhoto()">📤 Kirim Photo</button>
+        <div id="photoResult"></div>
+    </div>
+
+    <div class="card">
+        <h2>📝 Test sendMessage (Link)</h2>
+        <label>Message</label>
+        <textarea id="messageText">🔗 Test Link Video
+
+🎬 Video: https://video.twimg.com/amplify_video/2004618040743518209/vid/avc1/1280x720/MESKGetNIIOFVL_Z.mp4?tag=14</textarea>
+        
+        <button class="btn-primary" onclick="testSendMessage()">📤 Kirim Message</button>
+        <div id="messageResult"></div>
+    </div>
+
+    <div class="card">
+        <h2>📊 Test sendMediaGroup</h2>
+        <label>Media JSON (array)</label>
+        <textarea id="mediaGroupJson">[
+  {"type": "video", "media": "https://video.twimg.com/amplify_video/2004618040743518209/vid/avc1/1280x720/MESKGetNIIOFVL_Z.mp4?tag=14", "caption": "🧪 Test media group"}
+]</textarea>
+        
+        <button class="btn-danger" onclick="testSendMediaGroup()">📤 Kirim Media Group</button>
+        <div id="mediaGroupResult"></div>
+    </div>
+
+    <div class="card">
+        <h2>ℹ️ Get Bot Info</h2>
+        <button class="btn-secondary" onclick="getBotInfo()">🔍 Get Me</button>
+        <button class="btn-secondary" onclick="getUpdates()">🔍 Get Updates</button>
+        <div id="botInfoResult"></div>
+    </div>
+
+    <script>
+        // Helper function untuk API call
+        async function telegramAPI(method, params = {}) {
+            const botToken = document.getElementById('botToken').value;
+            const url = `https://api.telegram.org/bot${botToken}/${method}`;
+            
+            console.log(`📤 Calling: ${method}`, params);
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(params)
+            });
+            
+            const result = await response.json();
+            console.log(`📥 Response:`, result);
+            return result;
+        }
+
+        // Test sendVideo
+        async function testSendVideo() {
+            const chatId = document.getElementById('chatId').value;
+            const videoUrl = document.getElementById('videoUrl').value;
+            const caption = document.getElementById('videoCaption').value;
+            const resultDiv = document.getElementById('videoResult');
+            
+            resultDiv.innerHTML = '<div class="status loading">⏳ Mengirim video...</div>';
+            
+            try {
+                const result = await telegramAPI('sendVideo', {
+                    chat_id: chatId,
+                    video: videoUrl,
+                    caption: caption
+                });
+                
+                if (result.ok) {
+                    resultDiv.innerHTML = `<div class="result success">✅ SUCCESS!\n\n${JSON.stringify(result, null, 2)}</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="result error">❌ ERROR!\n\n${result.description}\n\n${JSON.stringify(result, null, 2)}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">❌ NETWORK ERROR!\n\n${error.message}</div>`;
+            }
+        }
+
+        // Test sendPhoto
+        async function testSendPhoto() {
+            const chatId = document.getElementById('chatId').value;
+            const photoUrl = document.getElementById('photoUrl').value;
+            const caption = document.getElementById('photoCaption').value;
+            const resultDiv = document.getElementById('photoResult');
+            
+            resultDiv.innerHTML = '<div class="status loading">⏳ Mengirim photo...</div>';
+            
+            try {
+                const result = await telegramAPI('sendPhoto', {
+                    chat_id: chatId,
+                    photo: photoUrl,
+                    caption: caption
+                });
+                
+                if (result.ok) {
+                    resultDiv.innerHTML = `<div class="result success">✅ SUCCESS!\n\n${JSON.stringify(result, null, 2)}</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="result error">❌ ERROR!\n\n${result.description}\n\n${JSON.stringify(result, null, 2)}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">❌ NETWORK ERROR!\n\n${error.message}</div>`;
+            }
+        }
+
+        // Test sendMessage
+        async function testSendMessage() {
+            const chatId = document.getElementById('chatId').value;
+            const text = document.getElementById('messageText').value;
+            const resultDiv = document.getElementById('messageResult');
+            
+            resultDiv.innerHTML = '<div class="status loading">⏳ Mengirim message...</div>';
+            
+            try {
+                const result = await telegramAPI('sendMessage', {
+                    chat_id: chatId,
+                    text: text,
+                    disable_web_page_preview: false
+                });
+                
+                if (result.ok) {
+                    resultDiv.innerHTML = `<div class="result success">✅ SUCCESS!\n\n${JSON.stringify(result, null, 2)}</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="result error">❌ ERROR!\n\n${result.description}\n\n${JSON.stringify(result, null, 2)}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">❌ NETWORK ERROR!\n\n${error.message}</div>`;
+            }
+        }
+
+        // Test sendMediaGroup
+        async function testSendMediaGroup() {
+            const chatId = document.getElementById('chatId').value;
+            const mediaJson = document.getElementById('mediaGroupJson').value;
+            const resultDiv = document.getElementById('mediaGroupResult');
+            
+            let media;
+            try {
+                media = JSON.parse(mediaJson);
+            } catch (e) {
+                resultDiv.innerHTML = `<div class="result error">❌ JSON Parse Error!\n\n${e.message}</div>`;
+                return;
+            }
+            
+            resultDiv.innerHTML = '<div class="status loading">⏳ Mengirim media group...</div>';
+            
+            try {
+                const result = await telegramAPI('sendMediaGroup', {
+                    chat_id: chatId,
+                    media: media
+                });
+                
+                if (result.ok) {
+                    resultDiv.innerHTML = `<div class="result success">✅ SUCCESS!\n\n${JSON.stringify(result, null, 2)}</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="result error">❌ ERROR!\n\n${result.description}\n\n${JSON.stringify(result, null, 2)}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">❌ NETWORK ERROR!\n\n${error.message}</div>`;
+            }
+        }
+
+        // Get bot info
+        async function getBotInfo() {
+            const resultDiv = document.getElementById('botInfoResult');
+            resultDiv.innerHTML = '<div class="status loading">⏳ Getting bot info...</div>';
+            
+            try {
+                const result = await telegramAPI('getMe');
+                
+                if (result.ok) {
+                    resultDiv.innerHTML = `<div class="result success">✅ Bot Info:\n\nID: ${result.result.id}\nUsername: @${result.result.username}\nName: ${result.result.first_name}\n\n${JSON.stringify(result, null, 2)}</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="result error">❌ ERROR!\n\n${result.description}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">❌ NETWORK ERROR!\n\n${error.message}</div>`;
+            }
+        }
+
+        // Get updates
+        async function getUpdates() {
+            const resultDiv = document.getElementById('botInfoResult');
+            resultDiv.innerHTML = '<div class="status loading">⏳ Getting updates...</div>';
+            
+            try {
+                const result = await telegramAPI('getUpdates');
+                
+                if (result.ok) {
+                    resultDiv.innerHTML = `<div class="result info">✅ Updates:\n\n${JSON.stringify(result, null, 2)}</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="result error">❌ ERROR!\n\n${result.description}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">❌ NETWORK ERROR!\n\n${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
