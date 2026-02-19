@@ -339,7 +339,9 @@
     statusIds.forEach(id => {
       const data = mediaMap.get(id);
       if (data) {
-        tweetInfo = `📌 Tweet: ${id}\n📝 ${data.text}`;
+        // Buat link ke tweet asli
+        const tweetUrl = `https://x.com/i/status/${id}`;
+        tweetInfo = `📌 Tweet: ${id}\n📝 ${data.text}\n🔗 Link: ${tweetUrl}`;
         allLinks.push(tweetInfo);
         let mediaIndex = 0;
         data.mediaList.forEach((m) => {
